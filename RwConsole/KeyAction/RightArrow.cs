@@ -5,9 +5,9 @@ namespace RwConsole.KeyAction
 {
     public class RightArrow: KeyActionBase
     {
-        public override void OnReadKey(ConsoleKeyInfo cki, Context ctx)
+        public override void OnReadKey(ConsoleKeyInfo cki, ContextContainer ctx)
         {
-            ctx.InputBuffer.CursorRightMove();
+            ctx.Get<InputBuffer>().CursorRightMove();
         }
     }
 }

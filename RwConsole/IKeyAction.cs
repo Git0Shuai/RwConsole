@@ -5,6 +5,8 @@ namespace RwConsole
 {
     public interface IKeyAction
     {
-        void OnReadKey(ConsoleKeyInfo cki, Context ctx);
+        void OnReadKey(ConsoleKeyInfo cki, ContextContainer ctx);
+
+        void OnRegist(ContextContainer ctx);
     }
 }

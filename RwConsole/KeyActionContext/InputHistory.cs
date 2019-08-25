@@ -2,7 +2,7 @@
 
 namespace RwConsole.KeyActionContext
 {
-    public class InputHistory
+    public class InputHistory: IContext
     {
         internal InputHistory(int maxSize = 50)
         {

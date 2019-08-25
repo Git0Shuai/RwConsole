@@ -3,11 +3,11 @@ using RwConsole.KeyActionContext;
 
 namespace RwConsole.KeyAction
 {
-    class BackSpace : KeyActionBase
+    public class BackSpace : KeyActionBase
     {
-        public override void OnReadKey(ConsoleKeyInfo cki, Context ctx)
+        public override void OnReadKey(ConsoleKeyInfo cki, ContextContainer ctx)
         {
-            ctx.InputBuffer.Delete();
+            ctx.Get<InputBuffer>()?.Delete();
         }
     }
 }

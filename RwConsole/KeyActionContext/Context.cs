@@ -1,15 +1,35 @@
-﻿namespace RwConsole.KeyActionContext
+﻿using System;
+using System.Collections.Generic;
+
+namespace RwConsole.KeyActionContext
 {
-    public struct Context
+    public class ContextContainer
     {
-        public Context(InputBuffer inputBuffer, InputHistory inputHistory)
+        internal ContextContainer()
         {
-            InputBuffer = inputBuffer;
-            InputHistory = inputHistory;
+            contextDict = new Dictionary<Type, object>();
         }
 
-        public readonly InputBuffer InputBuffer;
+        public T Get<T>() where T : class, IContext
+        {
+            if (contextDict.TryGetValue(typeof(T), out var ctx))
+            {
+                return ctx as T;
+            }
+            return null;
+        }
 
-        public readonly InputHistory InputHistory;
+        public void Set<T>(T ctx) where T: class, IContext
+        {
+            contextDict[typeof(T)] = ctx;
+        }
+
+        private readonly Dictionary<Type, object> contextDict;
     }
+
+
+    public interface IContext
+    {
+    }
+
 }

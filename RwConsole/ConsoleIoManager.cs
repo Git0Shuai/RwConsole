@@ -11,9 +11,9 @@ namespace RwConsole
 
         #region MyRegion Guard by Lock
 
-        private static InputBuffer _inputBuffer;
+        private static ContextContainer ctx;
+        private static InputBuffer InputBuffer => ctx.Get<InputBuffer>();
         private static InputCursor _inputCursor;
-        private static InputHistory _inputHistory;
         private static bool _waitingInputKey;
         // System.Console is also required to be guarded by Lock
 
@@ -31,8 +31,9 @@ namespace RwConsole
                 return;
             }
 
-            _inputBuffer = new InputBuffer(prompt);
-            _inputHistory = new InputHistory();
+            ctx = new ContextContainer();
+            ctx.Set(new InputBuffer(prompt));
+
             _inputCursor = new InputCursor();
 
             RegisterKeyAction(ConsoleKey.Enter, new Enter());
@@ -53,6 +54,7 @@ namespace RwConsole
         public static void RegisterKeyAction(ConsoleKey key, IKeyAction action)
         {
             KeyActions[key] = action ?? throw new NullReferenceException("Key action is required NOT NULL");
+            action?.OnRegist(ctx);
         }
 
         /// <summary>
@@ -61,13 +63,13 @@ namespace RwConsole
         /// <param name="preTotalLength"></param>
         private static void RenderInputOnCurrentLine(int preTotalLength)
         {
-            Console.Write(_inputBuffer.Prompt + _inputBuffer.GetInput());
+            Console.Write(InputBuffer.Prompt + InputBuffer.GetInput());
 
-            var cursorOffset = _inputBuffer.Count - _inputBuffer.Cursor;
-            var paddingCount = preTotalLength - _inputBuffer.TotalLength();
+            var cursorOffset = InputBuffer.Count - InputBuffer.Cursor;
+            var paddingCount = preTotalLength - InputBuffer.TotalLength();
 
             if (Environment.OSVersion.Platform == PlatformID.Unix
-                && _inputBuffer.TotalLength() % Console.BufferWidth == 0)
+                && InputBuffer.TotalLength() % Console.BufferWidth == 0)
             {
                 // on unix platform, if is cursor is going to stay at the left, 
                 // write an extra space to ensure BufferArea move up one line.
@@ -111,7 +113,6 @@ namespace RwConsole
             lock (Lock)
             {
                 Console.WriteLine();
-                _inputHistory.Enqueue(String.Empty);
                 _inputCursor.SetCurrentAsStart();
                 RenderInputOnCurrentLine(0);
                 _waitingInputKey = true;
@@ -122,19 +123,19 @@ namespace RwConsole
                 var k = Console.ReadKey();
                 lock (Lock)
                 {
-                    var preTotalLength = _inputBuffer.TotalLength();
-                    var consoleCursorOffset = _inputBuffer.Prompt.Length + _inputBuffer.Cursor;
+                    var preTotalLength = InputBuffer.TotalLength();
+                    var consoleCursorOffset = InputBuffer.Prompt.Length + InputBuffer.Cursor;
 
                     if (k.Key == ConsoleKey.Enter)
                     {
                         _waitingInputKey = false;
                         if (KeyActions.TryGetValue(ConsoleKey.Enter, out var enterAction))
                         {
-                            enterAction.OnReadKey(k, new Context(_inputBuffer, _inputHistory));
+                            enterAction.OnReadKey(k, ctx);
                         }
 
-                        var input = _inputBuffer.GetInput();
-                        _inputBuffer.Clear();
+                        var input = InputBuffer.GetInput();
+                        InputBuffer.Clear();
                         Console.WriteLine();
                         return input;
                     }
@@ -142,13 +143,13 @@ namespace RwConsole
 
                     if (KeyActions.ContainsKey(k.Key))
                     {
-                        KeyActions[k.Key].OnReadKey(k, new Context(_inputBuffer, _inputHistory));
+                        KeyActions[k.Key].OnReadKey(k, ctx);
                     }
                     else
                     {
                         if (k.KeyChar > 31)
                         {
-                            DefaultAction.Instance.OnReadKey(k, new Context(_inputBuffer, _inputHistory));
+                            DefaultAction.Instance.OnReadKey(k, ctx);
                         }
                     }
 
@@ -198,10 +199,10 @@ namespace RwConsole
                 if (_waitingInputKey)
                 {
                     // first, erase input
-                    _inputCursor.BackToStart(_inputBuffer.TotalLength(), 0);
-                    Console.Write(new string(' ', _inputBuffer.TotalLength()));
+                    _inputCursor.BackToStart(InputBuffer.TotalLength(), 0);
+                    Console.Write(new string(' ', InputBuffer.TotalLength()));
 
-                    _inputCursor.BackToStart(_inputBuffer.TotalLength(), 0);
+                    _inputCursor.BackToStart(InputBuffer.TotalLength(), 0);
                     Console.WriteLine(output);
 
                     _inputCursor.SetCurrentAsStart();

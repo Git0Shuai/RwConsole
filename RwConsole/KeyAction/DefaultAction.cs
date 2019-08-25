@@ -3,13 +3,13 @@ using RwConsole.KeyActionContext;
 
 namespace RwConsole.KeyAction
 {
-    class DefaultAction : KeyActionBase
+    public class DefaultAction : KeyActionBase
     {
         public static readonly DefaultAction Instance = new DefaultAction();
 
-        public override void OnReadKey(ConsoleKeyInfo cki, Context ctx)
+        public override void OnReadKey(ConsoleKeyInfo cki, ContextContainer ctx)
         {
-            ctx.InputBuffer.Insert(cki.KeyChar);
+            ctx.Get<InputBuffer>()?.Insert(cki.KeyChar);
         }
     }
 }

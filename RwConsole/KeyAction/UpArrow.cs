@@ -5,27 +5,38 @@ namespace RwConsole.KeyAction
 {
     public class UpArrow : KeyActionBase
     {
-        public override void OnReadKey(ConsoleKeyInfo cki, Context ctx)
+        public override void OnReadKey(ConsoleKeyInfo cki, ContextContainer ctx)
         {
             if (cki.Key != ConsoleKey.UpArrow)
             {
                 return;
             }
 
-            var current = ctx.InputBuffer.GetInput();
+            var inputBuffer = ctx.Get<InputBuffer>();
+            var inputHistory = ctx.Get<InputHistory>();
+
+            var current = inputBuffer.GetInput();
             if (current.Length != 0)
             {
-                ctx.InputHistory.Update(current);
+                inputHistory.Update(current);
             }
 
-            current = ctx.InputHistory.Pre();
+            current = inputHistory.Pre();
             if (current == null)
             {
                 return;
             }
 
-            ctx.InputBuffer.ForceSetInput(current);
-            ctx.InputBuffer.ForceSetCursorPos(current.Length);
+            inputBuffer.ForceSetInput(current);
+            inputBuffer.ForceSetCursorPos(current.Length);
+        }
+
+        public override void OnRegist(ContextContainer ctx)
+        {
+            if (ctx.Get<InputHistory>() == null)
+            {
+                ctx.Set(new InputHistory(100));
+            }
         }
     }
 }

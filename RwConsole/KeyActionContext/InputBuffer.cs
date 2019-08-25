@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace RwConsole.KeyActionContext
 {
-    public class InputBuffer : IReadOnlyList<char>
+    public class InputBuffer : IReadOnlyList<char>, IContext
     {
         public string Prompt { get; }
 

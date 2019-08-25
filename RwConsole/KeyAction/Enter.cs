@@ -3,29 +3,40 @@ using RwConsole.KeyActionContext;
 
 namespace RwConsole.KeyAction
 {
-    class Enter: KeyActionBase
+    public class Enter : KeyActionBase
     {
-        public override void OnReadKey(ConsoleKeyInfo cki, Context ctx)
+        public override void OnReadKey(ConsoleKeyInfo cki, ContextContainer ctx)
         {
             if (cki.Key != ConsoleKey.Enter)
             {
                 return;
             }
 
-            var current = ctx.InputBuffer.GetInput();
+            var current = ctx.Get<InputBuffer>().GetInput();
             if (current.Length == 0)
             {
                 return;
             }
 
-            ctx.InputHistory.Last();
-            if (ctx.InputHistory.Pre() == current)
+            var inputHistory = ctx.Get<InputHistory>();
+            inputHistory.Last();
+            if (inputHistory.Pre() == current)
             {
+                inputHistory.Next();
                 return;
             }
 
-            ctx.InputHistory.Next();
-            ctx.InputHistory.Update(current);
+            inputHistory.Next();
+            inputHistory.Update(current);
+            inputHistory.Enqueue(string.Empty);
+        }
+
+        public override void OnRegist(ContextContainer ctx)
+        {
+            if (ctx.Get<InputHistory>() == null)
+            {
+                ctx.Set(new InputHistory(100));
+            }
         }
     }
 }
